@@ -4,6 +4,7 @@
 !Makefile
 !*.mk
 !*.[cSh]
+!*.conf
 !*.cc
 !.gitignore
 !README.md
