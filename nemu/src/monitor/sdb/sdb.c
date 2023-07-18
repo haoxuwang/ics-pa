@@ -18,6 +18,8 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "sdb.h"
+#include <stdlib.h>
+#include <memory/paddr.h>
 
 static int is_batch_mode = false;
 
@@ -54,6 +56,44 @@ static int cmd_q(char *args) {
 
 static int cmd_help(char *args);
 
+static int cmd_si(char *args) {
+  int n = atoi(args);
+  cpu_exec(n);	
+  return 0;
+}
+
+static int cmd_info(char *args) {
+  if(strcmp(args,"r")==0){
+    isa_reg_display();
+  }
+ // if(arge == "w"){
+   // isa_reg_display(); 
+ // }
+  return 0;
+}
+static int cmd_x(char *args) {
+  char *n = strtok(args, " ");
+  if (n == NULL) { return 0; }
+  char *start = n + strlen(n) + 1;
+  if (start == NULL) {return 0; }
+  int i = strtol(start, NULL, 0);
+  printf("%x\n",paddr_read(i,atoi(n)));
+  return 0;
+}
+
+static int cmd_p(char *args) {
+  bool b = true;
+  word_t a = expr(args,&b);
+  if (b == false)
+  {
+    printf("error\n");
+  }
+  else {
+    printf("%d\n",a);
+  }
+  return 0;
+
+}
 static struct {
   const char *name;
   const char *description;
@@ -62,7 +102,10 @@ static struct {
   { "help", "Display information about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
-
+  { "si", "single step execution",cmd_si},
+  { "info", "print register status snd watch info",cmd_info  },
+  {  "x","scan memory",cmd_x },
+  {  "p","print expr",cmd_p}
   /* TODO: Add more commands */
 
 };

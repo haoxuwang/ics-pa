@@ -14,6 +14,8 @@
 ***************************************************************************************/
 
 #include <common.h>
+#include "monitor/sdb/sdb.h"
+
 
 void init_monitor(int, char *[]);
 void am_init_monitor();
@@ -21,12 +23,41 @@ void engine_start();
 int is_exit_status_bad();
 
 int main(int argc, char *argv[]) {
+
   /* Initialize the monitor. */
 #ifdef CONFIG_TARGET_AM
   am_init_monitor();
 #else
   init_monitor(argc, argv);
 #endif
+
+
+
+/*
+  FILE *fp = fopen("/home/wanghao/pa/ics-pa/nemu/tools/gen-expr/input", "r");
+  assert(fp != NULL);
+  char buf[65536];
+  while (fgets(buf, sizeof(buf), fp) != NULL)
+  {
+      char *result = strtok(buf, " ");
+      char *exp = strtok(NULL, " ");
+      exp[strlen(exp)-1]=0;
+      printf("result %s %s\n",result, exp);
+      bool b = true;
+      word_t a = expr(exp,&b);
+      if (a != atoi(result))
+      {
+        assert(0);
+      }
+      
+  }
+  fclose(fp);
+  printf("success! \n");
+  */
+
+
+
+
 
   /* Start engine. */
   engine_start();

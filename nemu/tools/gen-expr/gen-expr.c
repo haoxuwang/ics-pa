@@ -31,9 +31,55 @@ static char *code_format =
 "  return 0; "
 "}";
 
-static void gen_rand_expr() {
-  buf[0] = '\0';
+
+// 生成随机数字
+char* gen_num() {
+    char* num = malloc(2 * sizeof(char));  // 分配内存用于存储数字和结束符'\0'
+    num[0] = '0' + rand() % 10;  // 生成范围为0-9的随机数字
+    num[1] = '\0';  // 字符串结束符
+    return num;
 }
+
+// 生成随机操作符
+char* gen_rand_op() {
+    char* ops = "+-*/";
+    char* op = malloc(2 * sizeof(char));  // 分配内存用于存储操作符和结束符'\0'
+    op[0] = ops[rand() % 4];  // 随机选择一个操作符
+    op[1] = '\0';  // 字符串结束符
+    return op;
+}
+
+// 生成随机表达式
+char* gen_rand_expr() {
+    char* a;
+    switch (rand() % 3) {
+        case 0:
+            a = gen_num();
+            break;
+        case 1: {
+            char* expr = gen_rand_expr();
+            a = malloc((strlen(expr) + 3) * sizeof(char));  // 分配足够的内存用于存储括号和结束符'\0'
+            sprintf(a, "(%s)", expr);  // 将表达式括在括号中
+            free(expr);  // 释放之前分配的内存
+            break;
+        }
+        default: {
+            char* left_expr = gen_rand_expr();
+            char* right_expr = gen_rand_expr();
+            char* op = gen_rand_op();
+            a = malloc((strlen(left_expr) + strlen(right_expr) + strlen(op) + 1) * sizeof(char));  // 分配足够的内存用于存储两个表达式、操作符和结束符'\0'
+            strcpy(a, left_expr);  // 复制左表达式
+            strcat(a, op);  // 连接操作符
+            strcat(a, right_expr);  // 连接右表达式
+            free(left_expr);  // 释放之前分配的内存
+            free(right_expr);  // 释放之前分配的内存
+            free(op);  // 释放之前分配的内存
+            break;
+        }
+    }
+    return a;
+}
+
 
 int main(int argc, char *argv[]) {
   int seed = time(0);
@@ -44,7 +90,15 @@ int main(int argc, char *argv[]) {
   }
   int i;
   for (i = 0; i < loop; i ++) {
-    gen_rand_expr();
+    char* a = gen_rand_expr();
+    while (strlen(a)>65536)
+    {
+        a = gen_rand_expr();
+    }
+    
+
+    //printf("gen: %ld\n", strlen(a));
+    strcpy(buf,a);
 
     sprintf(code_buf, code_format, buf);
 
@@ -53,8 +107,26 @@ int main(int argc, char *argv[]) {
     fputs(code_buf, fp);
     fclose(fp);
 
-    int ret = system("gcc /tmp/.code.c -o /tmp/.expr");
-    if (ret != 0) continue;
+    int ret = system("gcc -Werror /tmp/.code.c -o /tmp/.expr");
+    if (ret != 0)
+    {
+        i--;
+        continue;
+    }
+    
+	if (WIFEXITED(ret))
+	{
+		if (0 != WEXITSTATUS(ret))
+		{
+            i--;
+			continue;
+		}
+	}
+	else
+	{
+        i--;
+		continue;
+	}
 
     fp = popen("/tmp/.expr", "r");
     assert(fp != NULL);
@@ -62,8 +134,11 @@ int main(int argc, char *argv[]) {
     int result;
     ret = fscanf(fp, "%d", &result);
     pclose(fp);
-
-    printf("%u %s\n", result, buf);
+        
+    if (ret != EOF) 
+      printf("%u %s\n", result, buf);
+    else
+      i--;
   }
   return 0;
 }
