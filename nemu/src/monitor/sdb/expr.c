@@ -19,10 +19,26 @@
  * Type 'man regex' for more information about POSIX regex functions.
  */
 #include <regex.h>
+#include <memory/paddr.h>
+
+
 
 enum {
-  TK_NOTYPE = 256, TK_EQ,NUM=0,
-
+  TK_NOTYPE = 256, 
+  TK_EQ = '=',
+  TK_NO_EQ = '!',
+  TK_AND = '&',
+  NUM = 0,
+  HEX = 'H',
+  REG = 'R',
+  PLUS='+', 
+  SUB = '-',
+  NEGATIVE = '_',
+  MUL = '*',
+  DEREF = '8',
+  DIV = '/',
+  LEFT = '(',
+  RIGHT = ')'
   /* TODO: Add more token types */
 
 };
@@ -37,16 +53,18 @@ static struct rule {
    */
 
   {" +", TK_NOTYPE},    // spaces
-  {"\\+", '+'},         // plus
-  {"-", '-'},         // sub
-  {"\\*", '*'},         // mul
-  {"/", '/'},         // div
+  {"\\+", PLUS},         // plus
+  {"-", SUB},         // sub
+  {"\\*", MUL},         // mul
+  {"/", DIV},         // div
+  {"0x[0-9A-F]+", HEX},         // num
   {"[0-9]+", NUM},         // num
+  {"\\$[0-9A-Za-z$]+", REG},         // reg
   {"==", TK_EQ},        // equal
-  {"!=", TK_EQ},        // equal
-  {"&&", TK_EQ},        // equal
-  {"\\(", '('},         // (
-  {"\\)", ')'},         // )
+  {"!=", TK_NO_EQ},        // no equal
+  {"&&", TK_AND},        // and
+  {"\\(", LEFT},         // (
+  {"\\)", RIGHT},         // )
 };
 
 #define NR_REGEX ARRLEN(rules)
@@ -103,14 +121,16 @@ static bool make_token(char *e) {
          */
 
         switch (rules[i].token_type) {
-         case NUM :
-	          Token t;	 
+          case REG :
+          case HEX :
+          case NUM :
+	          Token t;	
+            memset(&t, 0,sizeof(t)); 
             t.type = rules[i].token_type;
             if (substr_len >25)
             {
               assert(0);
             }
-            
             strncpy(t.str, substr_start,substr_len);
 	          tokens[nr_token++] = t;
             break;
@@ -180,8 +200,9 @@ static int getMainExprPosition(int p, int q){
   int i;
   int flag = 0;
   int left = -1;
+  int priority = -1;
   for(i=q;i>=p;i--){
-    if(tokens[i].type == TK_NOTYPE || tokens[i].type == NUM){
+    if(tokens[i].type == TK_NOTYPE || tokens[i].type == NUM ||tokens[i].type == HEX || tokens[i].type == REG){
         continue;;
     }
     if(tokens[i].type == ')'){
@@ -195,11 +216,24 @@ static int getMainExprPosition(int p, int q){
     if(flag > 0){
       continue;
     }
-    if(left==-1 &&( tokens[i].type == '*' || tokens[i].type == '/' )){
+
+    if(priority<0 &&( tokens[i].type == DEREF || tokens[i].type == NEGATIVE )){
+      priority = 0;
       left = i;
     }
 
-    if(tokens[i].type == '+' || tokens[i].type == '-' ){
+    if(priority<1 &&( tokens[i].type == DIV || tokens[i].type == MUL )){
+      priority = 1;
+      left = i;
+    }
+
+    if(priority<2 && (tokens[i].type == PLUS || tokens[i].type == SUB)){
+     priority = 2;
+     left = i;
+    }
+
+    if(tokens[i].type == TK_AND || tokens[i].type == TK_EQ || tokens[i].type == TK_NO_EQ){
+     priority = 3;
      left = i;
      return left;
     }
@@ -213,13 +247,59 @@ static int getMainExprPosition(int p, int q){
 
 }
 
+int hexToDecimal(const char* hexString) {
+    int decimal = 0;
+    int power = 1;  // 16的幂
+
+    // 忽略字符串中的前缀 "0x"
+    if (hexString[0] == '0' && (hexString[1] == 'x' || hexString[1] == 'X')) {
+        hexString += 2;
+    }
+
+    // 从字符串末尾开始遍历
+    for (int i = strlen(hexString) - 1; i >= 0; --i) {
+        char c = hexString[i];
+
+        // 检查字符是否有效
+        if (c >= '0' && c <= '9') {
+            decimal += (c - '0') * power;
+        } else if (c >= 'A' && c <= 'F') {
+            decimal += (c - 'A' + 10) * power;
+        } else {
+            printf("Invalid hex character: %c\n", c);
+            return -1;  // 返回一个错误值
+        }
+
+        power *= 16;  // 更新幂
+    }
+
+    return decimal;
+}
+
+
 
 static int eval(int p, int q) {
   if (p > q) {
     assert(0);
   }
   else if (p == q) {
-    return atoi(tokens[p].str);
+    if (tokens[p].type == HEX)
+    {
+      return hexToDecimal(tokens[p].str +2);
+    }
+    else if (tokens[p].type == REG)
+    {
+      bool b = true;  
+      int result = isa_reg_str2val(tokens[p].str +1,&b);
+      if (b == false)
+      {
+        printf("error\n");
+      }
+      return result;
+    }
+    else{
+      return atoi(tokens[p].str);
+    }
   }
 
   else if (check_parentheses(p, q) == true) {
@@ -227,13 +307,22 @@ static int eval(int p, int q) {
   }
   else {
     int op = getMainExprPosition(p,q);
-    int val1 = eval(p, op - 1);
+    int val1 = 0;
+    if (tokens[op].type!=NEGATIVE && tokens[op].type!=DEREF)
+    {
+      val1 =  eval(p, op - 1);
+    }
     int val2 = eval(op + 1, q);
     switch (tokens[op].type) {
-      case '+': return val1 + val2;
-      case '-': return val1 - val2;
-      case '*': return val1 * val2;
-      case '/': return val1 / val2;
+      case PLUS: return val1 + val2;
+      case SUB: return val1 - val2;
+      case NEGATIVE: return 0 - val2;
+      case MUL: return val1 * val2;
+      case DEREF: return paddr_read(val2,1);
+      case DIV: return val1 / val2;
+      case TK_EQ: return val1 == val2;
+      case TK_NO_EQ: return val1 != val2;
+      case TK_AND: return val1 && val2;
       default: assert(0);
     }
   }
@@ -244,5 +333,13 @@ word_t expr(char *e, bool *success) {
     *success = false;
     return 0;
   }
+  for (int i = 0; i < nr_token; i ++) {
+  if (tokens[i].type == '*' && (i == 0 || tokens[i - 1].type == '+'|| tokens[i - 1].type == '-'|| tokens[i - 1].type == '*'|| tokens[i - 1].type == '/'|| tokens[i - 1].type == '&'|| tokens[i - 1].type == '='|| tokens[i - 1].type == '!') ) {
+    tokens[i].type = DEREF;
+  }
+  if (tokens[i].type == '-' && (i == 0 || tokens[i - 1].type == '(') ) {
+    tokens[i].type = NEGATIVE;
+  }
+}
   return eval(0,nr_token-1);
 }
