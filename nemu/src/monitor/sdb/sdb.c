@@ -76,8 +76,14 @@ static int cmd_x(char *args) {
   if (n == NULL) { return 0; }
   char *start = n + strlen(n) + 1;
   if (start == NULL) {return 0; }
-  int i = strtol(start, NULL, 0);
-  printf("%x\n",paddr_read(i,atoi(n)));
+  bool b = true;
+  word_t a = expr(start,&b);
+  if (b == false)
+  {
+    printf("error\n");
+    return 0;
+  }
+  printf("%x\n",paddr_read(a,atoi(n)));
   return 0;
 }
 
@@ -94,6 +100,34 @@ static int cmd_p(char *args) {
   return 0;
 
 }
+
+static int cmd_w(char *args) {
+  bool b = true;
+  int no = new_wp(args,&b);
+  if (b)
+  {
+    printf("创建成功 NO:%d\n",no);
+  }
+  else{
+    printf("创建失败\n");
+  }
+  return no;
+}
+
+static int cmd_d(char *args) {
+  int n = atoi(args);
+  bool b = true;
+  free_wp(n,&b);
+  if (b)
+  {
+    printf("删除成功\n");
+  }
+  else{
+    printf("删除失败\n");
+  }
+  return 0;
+}
+
 static struct {
   const char *name;
   const char *description;
@@ -105,7 +139,9 @@ static struct {
   { "si", "single step execution",cmd_si},
   { "info", "print register status snd watch info",cmd_info  },
   {  "x","scan memory",cmd_x },
-  {  "p","print expr",cmd_p}
+  {  "p","print expr",cmd_p},
+  {  "w","new watch",cmd_w},
+  {  "d","delete watch",cmd_d}
   /* TODO: Add more commands */
 
 };
