@@ -1,0 +1,27 @@
+{
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "/home/wanghao/pa/ics-pa/nemu/build",
+            "binaryPath": "/home/wanghao/pa/ics-pa/nemu/build/riscv32-nemu-interpreter",
+            "binaryArgs": []
+        }
+    ],
+    "makefile.makefilePath": "/home/wanghao/pa/ics-pa/nemu/tools/gen-expr",
+    "files.associations": {
+        "string_view": "c",
+        "numeric": "c",
+        "regex.h": "c",
+        "functional": "c",
+        "random": "c",
+        "cmath": "c",
+        "system_error": "c",
+        "stdlib.h": "c",
+        "readline.h": "c",
+        "sdb.h": "c",
+        "chrono": "c",
+        "type_traits": "c",
+        "locale.h": "c",
+        "decode.h": "c"
+    }
+
+}
