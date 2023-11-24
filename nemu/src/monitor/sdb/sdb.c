@@ -66,9 +66,9 @@ static int cmd_info(char *args) {
   if(strcmp(args,"r")==0){
     isa_reg_display();
   }
- // if(arge == "w"){
-   // isa_reg_display(); 
- // }
+  if(strcmp(args,"w")==0){
+    watch_display(); 
+  }
   return 0;
 }
 static int cmd_x(char *args) {
@@ -204,7 +204,10 @@ void sdb_mainloop() {
     int i;
     for (i = 0; i < NR_CMD; i ++) {
       if (strcmp(cmd, cmd_table[i].name) == 0) {
-        if (cmd_table[i].handler(args) < 0) { return; }
+        if (cmd_table[i].handler(args) < 0) { 
+          nemu_state.state = NEMU_QUIT;
+          return; 
+        }
         break;
       }
     }

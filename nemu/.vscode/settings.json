@@ -21,7 +21,15 @@
         "chrono": "c",
         "type_traits": "c",
         "locale.h": "c",
-        "decode.h": "c"
+        "decode.h": "c",
+        "typeinfo": "c",
+        "autoconf.h": "c",
+        "macro.h": "c",
+        "inttypes.h": "c",
+        "common.h": "c",
+        "isa.h": "c",
+        "paddr.h": "c",
+        "cpu.h": "c"
     }
 
 }

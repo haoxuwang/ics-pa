@@ -24,5 +24,7 @@ int new_wp(char* exp, bool *success);
 
 void free_wp(int no, bool *success);
 
+void watch_display();
+
 
 #endif

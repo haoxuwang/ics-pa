@@ -145,5 +145,9 @@ bool execWatchPoint(){
   return b;
 }
 
+void watch_display(){
+  
+}
+
 /* TODO: Implement the functionality of watchpoint */
 
