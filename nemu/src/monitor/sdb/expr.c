@@ -278,7 +278,7 @@ int hexToDecimal(const char* hexString) {
 
 
 
-static int eval(int p, int q) {
+static int eval(int p, int q, bool *success) {
   if (p > q) {
     assert(0);
   }
@@ -289,12 +289,7 @@ static int eval(int p, int q) {
     }
     else if (tokens[p].type == REG)
     {
-      bool b = true;  
-      int result = isa_reg_str2val(tokens[p].str +1,&b);
-      if (b == false)
-      {
-        printf("error\n");
-      }
+      int result = isa_reg_str2val(tokens[p].str +1,success);
       return result;
     }
     else{
@@ -303,16 +298,16 @@ static int eval(int p, int q) {
   }
 
   else if (check_parentheses(p, q) == true) {
-    return eval(p + 1, q - 1);
+    return eval(p + 1, q - 1,success);
   }
   else {
     int op = getMainExprPosition(p,q);
     int val1 = 0;
     if (tokens[op].type!=NEGATIVE && tokens[op].type!=DEREF)
     {
-      val1 =  eval(p, op - 1);
+      val1 =  eval(p, op - 1,success);
     }
-    int val2 = eval(op + 1, q);
+    int val2 = eval(op + 1, q,success);
     switch (tokens[op].type) {
       case PLUS: return val1 + val2;
       case SUB: return val1 - val2;
@@ -341,5 +336,5 @@ word_t expr(char *e, bool *success) {
     tokens[i].type = NEGATIVE;
   }
 }
-  return eval(0,nr_token-1);
+  return eval(0,nr_token-1,success);
 }
