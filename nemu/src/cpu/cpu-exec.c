@@ -17,6 +17,7 @@
 #include <cpu/decode.h>
 #include <cpu/difftest.h>
 #include <locale.h>
+#include "../../include/monitor/fftrace.h"
 
 /* The assembly code of instructions executed is only output to the screen
  * when the number of instructions executed is less than this value.
@@ -124,6 +125,7 @@ static void print_ringbuf() {
 void assert_fail_msg() {
   isa_reg_display();
   print_ringbuf();
+  print_stack_trace();
   statistic();
 }
 
@@ -154,6 +156,9 @@ void cpu_exec(uint64_t n) {
     case NEMU_ABORT:
       #ifdef CONFIG_ITRACE_COND
       print_ringbuf();
+      #endif
+      #ifdef CONFIG_FTRACE_COND
+      print_stack_trace();
       #endif
 
     case NEMU_END:

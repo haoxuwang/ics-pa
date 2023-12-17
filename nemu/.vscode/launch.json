@@ -35,7 +35,7 @@
             "type": "cppdbg",//类型固定
             "request": "launch",
             "program": "/home/wanghao/ics-pa/nemu/build/riscv32-nemu-interpreter",//输入调式程序的执行路径
-            "args": ["/home/wanghao/ics-pa/am-kernels/tests/cpu-tests/build/dummy-riscv32-nemu.bin"],//参数表
+            "args": ["/home/wanghao/ics-pa/am-kernels/tests/cpu-tests/build/dummy-riscv32-nemu.bin","e=/home/wanghao/ics-pa/am-kernels/tests/cpu-tests/build/load-store-riscv32-nemu.elf"],//参数表
             "stopAtEntry": false,//进函数暂停
             "cwd": "${fileDirname}",//进入目录
             "environment": [],
