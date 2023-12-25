@@ -80,8 +80,11 @@ int new_wp(char* exp, bool *success){
   // 断开和free的链接
   last->next = NULL;
   
-    
-  strncpy(last->str,exp,strlen(exp));
+  size_t len_to_copy = (strlen(exp) < strlen(last->str) - 1) ? strlen(exp) : (strlen(last->str) - 1);
+  strncpy(last->str,exp,len_to_copy);
+  last->str[len_to_copy] = '\0';
+
+
   last->preResult = a;
   return last->NO;
   
